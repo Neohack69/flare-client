@@ -1,6 +1,6 @@
 # Flare Client
 
-Source mirror of the **Flare** desktop client — a thin, read-only flight
+Source mirror of the **Flare** desktop client - a thin, read-only flight
 recorder for **MSFS 2024** and **X-Plane 12**. It records telemetry locally,
 computes a deterministic landing score and syncs flight aggregates to the
 pilot's Flare account. Scoring and analytics are server-authoritative; this
@@ -62,11 +62,11 @@ what it does not is described in [`PRIVACY.md`](PRIVACY.md).
 
 ## Security
 
-Please report vulnerabilities privately — see [`SECURITY.md`](SECURITY.md).
+Please report vulnerabilities privately - see [`SECURITY.md`](SECURITY.md).
 
 ## License
 
-Apache License 2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+Apache License 2.0 - see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 Third-party attributions: [`apps/desktop/resources/THIRD_PARTY_NOTICES.txt`](apps/desktop/resources/THIRD_PARTY_NOTICES.txt).
 
 Microsoft Flight Simulator, SimConnect and related marks are trademarks of
