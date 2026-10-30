@@ -1,0 +1,218 @@
+# ============================================================================
+# Release (signed) — public Flare client mirror.
+#
+# Build an unsigned Windows NSIS installer on GitHub-hosted runners, submit it
+# to SignPath Foundation for Authenticode signing, verify the signature,
+# regenerate the electron-updater feed from the SIGNED bytes, and publish a
+# GitHub Release.
+#
+# This public workflow deliberately has NO access to servers, SSH keys, .env
+# files or any deployment credentials. It only publishes a GitHub Release.
+# Publishing the update feed to the product domain is a separate, private
+# process that downloads the signed release.
+#
+# Required repository setup (one-time, owner):
+#   * Secret  SIGNPATH_API_TOKEN              — submitter token (minimum rights)
+#   * Secret  SIGNPATH_ORGANIZATION_ID        — SignPath organization id
+#   * Environment `release-signing`           — required reviewers = approver
+#   * SignPath project `flare-client`, signing policy `release-signing`,
+#     artifact configuration `nsis-installer` (see docs/code-signing-policy.md)
+#   * MFA enabled for every account with write access
+#
+# Note: `environment: release-signing` pauses the job until the approver
+# approves it, so every signing request is a deliberate manual action.
+# ============================================================================
+
+name: Release (signed)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Update channel (feed file name)'
+        required: true
+        type: choice
+        default: latest
+        options: [latest, beta]
+      version:
+        description: 'Version to release (x.y.z, no leading v). Empty = apps/desktop/package.json'
+        required: false
+        type: string
+
+permissions:
+  contents: write # create the GitHub Release
+  actions: read   # SignPath reads the workflow artifact and job details
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-sign-release:
+    name: Build / sign / verify (Windows)
+    runs-on: windows-latest # GitHub-hosted is a hard requirement for OSS SignPath
+    timeout-minutes: 90
+    environment: release-signing # required reviewer = manual approval per release
+    env:
+      # Build UNSIGNED: no certificate exists here; SignPath signs the artifact.
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      FLIGHTLOG_CHANNEL: ${{ github.event.inputs.channel || 'latest' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        # Version comes from `packageManager` in package.json (pnpm 9.x).
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Resolve and validate version
+        shell: pwsh
+        run: |
+          $pkg = Get-Content apps/desktop/package.json -Raw | ConvertFrom-Json
+          $version = $pkg.version
+          if ($version -notmatch '^\d+\.\d+\.\d+([-.+][0-9A-Za-z.-]+)?$') {
+            throw "Unexpected version in apps/desktop/package.json: '$version'"
+          }
+          $inputVersion = "${{ github.event.inputs.version }}"
+          if ($inputVersion -and $inputVersion -ne $version) {
+            throw "Input version '$inputVersion' != apps/desktop/package.json '$version'"
+          }
+          if ("${{ github.ref_type }}" -eq 'tag') {
+            $tagVersion = "${{ github.ref_name }}".TrimStart('v')
+            if ($tagVersion -ne $version) {
+              throw "Tag '${{ github.ref_name }}' != apps/desktop/package.json '$version'"
+            }
+          }
+          "FLARE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Releasing Flare $version (channel $env:FLIGHTLOG_CHANNEL)"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Electron binary
+        # Electron 44 no longer downloads its binary from a postinstall script;
+        # the runtime archive is fetched explicitly (needed by verify:native).
+        run: pnpm --filter @flightlog/desktop exec install-electron
+
+      - name: Build workspace dependencies
+        # contracts/scoring/agent/i18n are consumed from their `dist` — build them
+        # before typecheck/test so a fresh checkout resolves the workspace packages.
+        run: pnpm --filter @flightlog/desktop build:deps
+
+      - name: Supply-chain — license gate (no strong copyleft)
+        run: node scripts/check-licenses.mjs
+
+      - name: Lint / typecheck / test (desktop)
+        run: |
+          pnpm --filter @flightlog/desktop lint
+          pnpm --filter @flightlog/desktop typecheck
+          pnpm --filter @flightlog/desktop test
+
+      - name: Verify native module loads in Electron
+        run: pnpm --filter @flightlog/desktop verify:native
+
+      - name: Build desktop bundles
+        run: pnpm --filter @flightlog/desktop build
+
+      - name: Package NSIS (unsigned)
+        run: node apps/desktop/scripts/package-win.mjs
+
+      - name: Upload unsigned installer
+        id: upload-unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: flare-setup-unsigned
+          path: apps/desktop/release/Flare-Setup-*.exe
+          archive: false # raw PE file; artifact config root is <pe-file>
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove unsigned installer from the release directory
+        shell: pwsh
+        # SignPath writes the signed installer back into this directory. Removing
+        # the unsigned file avoids any chance of publishing it by mistake.
+        run: |
+          Get-ChildItem apps/desktop/release/Flare-Setup-*.exe | Remove-Item -Force
+
+      - name: Sign installer (SignPath Foundation)
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: flare-client
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: nsis-installer
+          github-artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          skip-decompress: true # upload-artifact used archive: false
+          output-artifact-directory: apps/desktop/release
+          parameters: |
+            version: "${{ env.FLARE_VERSION }}"
+
+      - name: Verify Authenticode signature
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem apps/desktop/release/Flare-Setup-*.exe | Select-Object -First 1
+          if (-not $exe) { throw "Signed installer not found in apps/desktop/release" }
+          $sig = Get-AuthenticodeSignature -FilePath $exe.FullName
+          Write-Host "Status: $($sig.Status)"
+          Write-Host "Signer: $($sig.SignerCertificate.Subject)"
+          if ($sig.Status -ne 'Valid') { throw "Authenticode status is '$($sig.Status)', expected Valid" }
+          if ($sig.SignerCertificate.Subject -notmatch 'SignPath Foundation') {
+            throw "Unexpected signer: $($sig.SignerCertificate.Subject)"
+          }
+
+      - name: Regenerate update feed from the signed installer
+        run: node apps/desktop/scripts/regen-feed.mjs --channel $env:FLIGHTLOG_CHANNEL --version $env:FLARE_VERSION
+
+      - name: Verify feed sha512 == base64(SHA-512(installer))
+        run: node apps/desktop/scripts/regen-feed.mjs --channel $env:FLIGHTLOG_CHANNEL --version $env:FLARE_VERSION --verify
+
+      - name: Verify SHA256SUMS
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem apps/desktop/release/Flare-Setup-*.exe | Select-Object -First 1
+          $sums = Get-Content apps/desktop/release/SHA256SUMS.txt
+          $expected = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $pattern = [regex]::Escape($exe.Name) + '$'
+          $line = @($sums | Where-Object { $_ -match $pattern }) | Select-Object -First 1
+          if (-not $line) { throw "SHA256SUMS.txt has no entry for $($exe.Name)" }
+          if (-not $line.StartsWith($expected)) { throw "SHA256SUMS.txt hash does not match $($exe.Name)" }
+          Write-Host "SHA-256: $expected"
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "v$env:FLARE_VERSION"
+          $files = @(
+            "apps/desktop/release/Flare-Setup-$env:FLARE_VERSION.exe",
+            "apps/desktop/release/$env:FLIGHTLOG_CHANNEL.yml",
+            "apps/desktop/release/SHA256SUMS.txt"
+          )
+          foreach ($f in $files) { if (-not (Test-Path $f)) { throw "Missing release asset: $f" } }
+          $existing = git tag --list $tag
+          if ($existing) {
+            $tagCommit = (git rev-list -n 1 $tag).Trim()
+            if ($tagCommit -ne $env:GITHUB_SHA) {
+              throw "Tag $tag already points to $tagCommit, not to $env:GITHUB_SHA"
+            }
+            & gh release create $tag --title "Flare $env:FLARE_VERSION" --generate-notes $files
+          } else {
+            & gh release create $tag --title "Flare $env:FLARE_VERSION" --generate-notes --target $env:GITHUB_SHA $files
+          }
+          if ($LASTEXITCODE -ne 0) { throw "gh release create failed ($LASTEXITCODE)" }

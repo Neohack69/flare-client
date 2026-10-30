@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Привязка ПК: Flare</title>
+    <link rel="stylesheet" href="./desktop.css" />
+  </head>
+  <body class="status-page">
+    <header class="titlebar" id="titlebar">
+      <span class="titlebar__brand">
+        <span id="titlebar-mark" aria-hidden="true"></span>
+        <span class="titlebar__name">Flare</span>
+        <span class="titlebar__version mono" id="app-version">-</span>
+      </span>
+      <span class="titlebar__controls">
+        <button
+          class="winbtn"
+          type="button"
+          id="button-minimize"
+          aria-label="Свернуть"
+          title="Свернуть"
+        >
+          <span id="icon-minimize" aria-hidden="true"></span>
+        </button>
+        <button
+          class="winbtn winbtn--close"
+          type="button"
+          id="button-close"
+          aria-label="Закрыть"
+          title="Закрыть"
+        >
+          <span id="icon-close" aria-hidden="true"></span>
+        </button>
+      </span>
+    </header>
+    <main class="swin" id="swin" role="status" aria-live="polite">
+      <header class="swin__head">
+        <span class="swin__head-left">
+          <span class="brandline">
+            <span id="brand" aria-hidden="true"></span>
+            <span>Flare</span>
+          </span>
+          <span class="planchip" id="plan-chip" role="note" hidden>
+            <span class="planchip__icon" id="plan-chip-icon" aria-hidden="true" hidden></span>
+            <span id="plan-chip-text"></span>
+            <span class="planchip__bar" id="plan-chip-bar" aria-hidden="true" hidden></span>
+          </span>
+        </span>
+        <span class="swin__head-right">
+          <span class="langswitch" id="lang-switch" role="group" aria-label="Язык интерфейса">
+            <button
+              type="button"
+              class="langswitch__btn"
+              id="lang-ru"
+              data-locale="ru"
+              aria-pressed="false"
+              aria-label="Русский"
+            >
+              RU
+            </button>
+            <button
+              type="button"
+              class="langswitch__btn"
+              id="lang-en"
+              data-locale="en"
+              aria-pressed="false"
+              aria-label="English"
+            >
+              EN
+            </button>
+          </span>
+        </span>
+      </header>
+
+      <section class="pairing" id="pairing">
+        <span class="pairing__dot" id="pairing-dot" aria-hidden="true"></span>
+        <span class="pairing__body">
+          <span class="pairing__text" id="pairing-text">-</span>
+          <span class="pairing__account muted" id="pairing-account"></span>
+        </span>
+      </section>
+
+      <p class="banner banner--info" id="banner-offline" hidden>
+        <span id="banner-offline-icon" aria-hidden="true"></span>
+        <span id="banner-offline-text"></span>
+      </p>
+      <p class="banner banner--danger" id="banner-error" hidden>
+        <span id="banner-error-icon" aria-hidden="true"></span>
+        <span id="banner-error-text"></span>
+      </p>
+      <section class="banner banner--warning" id="banner-device" hidden aria-live="polite">
+        <span id="banner-device-icon" aria-hidden="true"></span>
+        <span id="banner-device-text"></span>
+        <button class="dbtn dbtn--secondary" type="button" id="button-manage-devices">
+          <span id="label-manage-devices">Управление устройствами</span>
+        </button>
+      </section>
+
+      <section class="statuscard" id="status-card">
+        <section class="swin__state state" id="chip" aria-live="polite">
+          <span class="statuschip">
+            <span class="dot" aria-hidden="true"></span>
+            <span id="state-icon" aria-hidden="true"></span>
+            <span id="state-title">-</span>
+          </span>
+          <span class="caption secondary" id="state-message"></span>
+        </section>
+
+        <span class="statuscard__seam" aria-hidden="true"></span>
+
+        <section class="statusgrid" id="status-grid" aria-live="polite">
+          <span class="statusgrid__row statusgrid__row--muted" id="sim-row">
+            <span class="statusgrid__dot" aria-hidden="true"></span>
+            <span class="statusgrid__text" id="sim-line">-</span>
+          </span>
+          <span class="statusgrid__row" id="flight-row">
+            <span class="statusgrid__text" id="flight-line">-</span>
+          </span>
+          <span class="statusgrid__row" id="data-row">
+            <span class="statusgrid__text mono" id="data-line">-</span>
+          </span>
+          <span class="statusgrid__row statusgrid__row--warn" id="degraded-row" hidden>
+            <span class="statusgrid__text" id="degraded-line"></span>
+          </span>
+          <span class="statusgrid__row statusgrid__row--muted" id="pending-row" hidden>
+            <span class="statusgrid__text" id="pending-line"></span>
+          </span>
+        </section>
+      </section>
+
+      <section class="flight" id="flight" hidden>
+        <span class="flight__route mono" id="flight-route"></span>
+        <span class="flight__meta mono" id="flight-meta"></span>
+      </section>
+
+      <section class="landing" id="landing" hidden aria-live="polite">
+        <div class="landing__head">
+          <span class="overline" id="landing-overline">Последняя посадка</span>
+          <span class="caption muted mono" id="landing-seq"></span>
+        </div>
+        <div class="landing__body">
+          <div class="landing__score">
+            <span class="landing__value mono" id="landing-score">-</span>
+            <span class="caption muted" id="landing-score-label">Балл</span>
+            <span class="landing__grade" id="landing-grade"></span>
+          </div>
+          <div class="landing__metric">
+            <span class="caption muted" id="landing-vs-label">Вертикальная скорость</span>
+            <span class="landing__metric-value mono" id="landing-vs">-</span>
+            <span class="caption muted" id="landing-flags"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="devicecode" id="device-code" hidden aria-live="polite">
+        <p class="overline" id="device-code-overline">Подтверждение устройства</p>
+        <div class="devicecode__row">
+          <span class="devicecode__value mono" id="device-code-value">-</span>
+          <button class="dbtn dbtn--secondary dbtn--compact" type="button" id="button-copy-code">
+            <span id="icon-copy" aria-hidden="true"></span>
+            <span id="label-copy-code">Скопировать код</span>
+          </button>
+        </div>
+        <p class="caption secondary devicecode__timer" id="device-code-timer"></p>
+        <div class="devicecode__actions" id="device-code-actions">
+          <button class="dbtn dbtn--primary dbtn--full" type="button" id="button-open-device">
+            <span id="icon-open" aria-hidden="true"></span>
+            <span id="label-open-device">Открыть сайт для подтверждения</span>
+          </button>
+        </div>
+        <button
+          class="dbtn dbtn--secondary dbtn--full"
+          type="button"
+          id="button-request-code"
+          hidden
+        >
+          <span id="icon-request" aria-hidden="true"></span>
+          <span id="label-request-code">Запросить новый код</span>
+        </button>
+        <p class="caption muted" id="device-code-hint"></p>
+      </section>
+
+      <div class="syncrow">
+        <span class="syncrow__line" id="sync-line"
+          ><span id="label-sync-prefix">Синхронизировано:</span>
+          <span class="mono" id="sync-value">-</span></span
+        >
+        <span class="syncrow__err" id="error" hidden>
+          <span id="error-icon" aria-hidden="true"></span>
+          <span id="error-text"></span>
+        </span>
+      </div>
+
+      <div class="devicerow">
+        <span id="device-line"></span>
+      </div>
+
+      <section class="upd" id="update" hidden aria-live="polite">
+        <p class="upd__head">
+          <span class="upd__icon" id="update-icon" aria-hidden="true"></span>
+          <span class="upd__text" id="update-text"></span>
+        </p>
+        <p class="upd__reason" id="update-reason">
+          <span class="upd__reason-icon" id="update-reason-icon" aria-hidden="true"></span>
+          <span class="upd__reason-text" id="update-reason-text"></span>
+        </p>
+        <button
+          class="dbtn dbtn--primary upd__cta"
+          type="button"
+          id="button-install-update"
+          aria-describedby="update-reason"
+        >
+          <span id="label-install-update"></span>
+        </button>
+      </section>
+
+      <div class="swin__actions">
+        <button class="dbtn dbtn--primary dbtn--pro-key dbtn--full" type="button" id="button-sync">
+          <span id="icon-sync" aria-hidden="true"></span>
+          <span id="label-sync">Синхронизировать сейчас</span>
+        </button>
+        <div class="grid2">
+          <button class="dbtn dbtn--secondary" type="button" id="button-agent">
+            <span id="icon-agent" aria-hidden="true"></span>
+            <span id="label-agent">Остановить</span>
+          </button>
+          <button class="dbtn dbtn--secondary" type="button" id="button-about">
+            <span id="label-about">О программе</span>
+          </button>
+        </div>
+        <button class="dbtn dbtn--ghost dbtn--full" type="button" id="button-check-updates">
+          <span id="icon-check-updates" aria-hidden="true"></span>
+          <span id="label-check-updates">Проверить обновления</span>
+        </button>
+      </div>
+    </main>
+    <script type="module" src="./status.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,120 @@
+# electron-builder — Windows NSIS per-user (ADR-0011 §8.1)
+appId: dev.flightlog.desktop
+productName: Flare
+# Метаданные exe (CompanyName/ProductName) — иначе в свойствах файла
+# остаётся «GitHub, Inc.» из базового `electron.exe`.
+# CompanyName electron-builder берёт из `author.name` в package.json
+# (appInfo.companyName); отдельного `companyName` в схеме v26 НЕТ — он ломает
+# валидацию конфига. Taskbar/окно-иконка — `win.icon`, метаданные — `author`.
+copyright: Copyright © Flare
+
+# Имя артефактов без пробелов — предсказуемые URL для `/download` и update-фида
+# (T-DEP4): Flare-Setup-0.2.4.exe / ….exe.blockmap.
+artifactName: Flare-Setup-${version}.${ext}
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - out/**/*
+  - package.json
+  # Sourcemap'ы не поставляем: лишний вес инсталлятора + supply-chain (T110).
+  - '!out/**/*.map'
+  # Vendored sourcemap'ы `node-simconnect` (LGPL-модуль в asarUnpack) тоже не
+  # поставляем: ~200 `.map` раздувают app.asar.unpacked и шумят в verify-release.
+  - '!node_modules/node-simconnect/dist/**/*.map'
+  # Workspace-зависимости (`@flightlog/*`) в поставке нужны ТОЛЬКО как собранный
+  # `dist` (резолв `main`/`exports` идёт в dist). Исходники, тесты, sourcemap'ы,
+  # tsconfig и turbo-логи в asar не нужны: их дублирует собранный `out/**`, они
+  # раздувают инсталлятор и шумят в аудите/verify-release.
+  - '!node_modules/@flightlog/*/src/**'
+  - '!node_modules/@flightlog/*/**/*.test.js'
+  - '!node_modules/@flightlog/*/**/*.map'
+  - '!node_modules/@flightlog/*/.turbo/**'
+  - '!node_modules/@flightlog/*/tsconfig.json'
+  - '!node_modules/@flightlog/*/**/*.tsbuildinfo'
+
+extraResources:
+  - from: resources/THIRD_PARTY_NOTICES.txt
+    to: THIRD_PARTY_NOTICES.txt
+  # Иконки окна/таскбара для BrowserWindow (main читает `process.resourcesPath/icon.ico`
+  # на Windows и `.../icon.png` на прочих платформах).
+  # `.exe`-иконку electron-builder берёт из build/icon.ico автоматически.
+  - from: build/icon.ico
+    to: icon.ico
+  - from: build/icon.png
+    to: icon.png
+
+asar: true
+# LGPL-3.0 `node-simconnect` — чистый JS (не `.node`), но unpack из asar
+# сохраняет возможность подмены модуля (ADR-0011 §9, docs/security/licensing.md).
+asarUnpack:
+  - '**/node_modules/node-simconnect/**'
+  # better-sqlite3 ≥13 — N-API, бинарник ABI-независим, но .node всё равно
+  # обязан лежать вне asar (Electron не грузит нативные модули из архива).
+  - '**/node_modules/better-sqlite3/**'
+
+# better-sqlite3 для desktop ставится N-API-сборкой (13.x, win32-x64 prebuild
+# внутри npm-тарбола) — этап node-gyp/electron-rebuild не нужен, ABI общий с
+# Electron. CI-проверка загрузки — `pnpm --filter @flightlog/desktop verify:native`.
+npmRebuild: false
+nodeGypRebuild: false
+
+win:
+  # Фирменная Flare-иконка exe/таскбара (генерируется `scripts/generate-icons.mjs`
+  # из бренд-знака перед сборкой; `build/` — gitignored buildResources).
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+  # Authenticode (T110). Секреты здесь НЕ хранятся — только env/CI secrets:
+  #   CSC_LINK / WIN_CSC_LINK            — base64 `.pfx` или путь/URL к сертификату;
+  #   CSC_KEY_PASSWORD / WIN_CSC_KEY_PASSWORD — пароль к `.pfx`.
+  # Если переменных нет — сборка проходит БЕЗ подписи (forceCodeSigning: false),
+  # это осознанный fallback до покупки сертификата. Явное предупреждение и
+  # публикация SHA-256 — в scripts/package-win.mjs / scripts/verify-release.mjs
+  # и в runbook `docs/devops/release.md`.
+  forceCodeSigning: false
+  signAndEditExecutable: true
+  signtoolOptions:
+    # RFC3161-таймстамп: подпись остаётся валидной после истечения сертификата.
+    rfc3161TimeStampServer: http://timestamp.digicert.com
+    # Только SHA-256 (без устаревшего SHA-1).
+    signingHashAlgorithms:
+      - sha256
+    # publisherName/ certificateSubjectName намеренно не заданы: при появлении
+    # сертификата electron-builder выведет издателя из него сам (либо задать
+    # через CI-секрет/`publisherName` для EV/облачной подписи).
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Flare
+  # Legacy-AUMID self-heal: custom NSIS-скрипт при установке/обновлении/удалении
+  # удаляет легаси-ярлыки «Electron»/«Touchdown Moment», перехватывающие наш
+  # AppUserModelId (`dev.flightlog.desktop`) в панели задач. См. build/installer.nsh.
+  # `include` — валидная опция NSIS в electron-builder 26.x (resolve относительно
+  # buildResources `build/`, иначе — относительно каталога приложения).
+  include: build/installer.nsh
+  # DESKTOP-UX-POLISH: фирменная Flare-иконка установщика и деинсталлятора.
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+
+# T-DEP4/T-UPD1: generic update-feed на СВОЁМ домене (не GitHub). electron-updater
+# для generic-провайдера читает `<url>/<channel>.yml` (канал по умолчанию `latest`),
+# поэтому `latest.yml` генерируется в `release/` даже при `--publish never`
+# (package-win.mjs никогда не публикует автоматически; выкладка — отдельный шаг).
+publish:
+  - provider: generic
+    url: https://tdmoment.ru/desktop/updates/
+# Канал beta — тот же каталог, отдельный файл `beta.yml` (см. docs/devops/release.md §6).
+# Чтобы собрать beta-метаданные, временно добавить вторым элементом:
+#   - provider: generic
+#     url: https://tdmoment.ru/desktop/updates/
+#     channel: beta
+

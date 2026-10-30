@@ -1,0 +1,74 @@
+{
+  "name": "@flightlog/agent",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "description": "TS-агент SimConnect (MSFS 2024) — тонкий read-only модуль (реализация T8-T10)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "flightlog-agent": "./dist/main.js",
+    "flightlog-agent-sync": "./dist/cli/sync.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./host": {
+      "types": "./dist/host/bootstrap.d.ts",
+      "import": "./dist/host/bootstrap.js",
+      "require": "./dist/host/bootstrap.js",
+      "default": "./dist/host/bootstrap.js"
+    },
+    "./memory-buffer": {
+      "types": "./dist/buffer/memory-buffer.d.ts",
+      "import": "./dist/buffer/memory-buffer.js",
+      "require": "./dist/buffer/memory-buffer.js",
+      "default": "./dist/buffer/memory-buffer.js"
+    },
+    "./logging": {
+      "types": "./dist/cli/logger.d.ts",
+      "import": "./dist/cli/logger.js",
+      "require": "./dist/cli/logger.js",
+      "default": "./dist/cli/logger.js"
+    },
+    "./token-store": {
+      "types": "./dist/sync/token-store.d.ts",
+      "import": "./dist/sync/token-store.js",
+      "require": "./dist/sync/token-store.js",
+      "default": "./dist/sync/token-store.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "node dist/main.js",
+    "agent:run": "node dist/main.js",
+    "sync": "node dist/cli/sync.js",
+    "flush": "node dist/cli/sync.js",
+    "live-smoke": "node scripts/live-smoke.mjs",
+    "spike:simconnect": "tsc && node scripts/spike-simconnect.mjs",
+    "buffer:stats": "node scripts/buffer-stats.mjs",
+    "simvar:layout": "node scripts/simvar-layout.mjs",
+    "simvar:probe": "node scripts/simvar-probe.mjs"
+  },
+  "dependencies": {
+    "@flightlog/contracts": "workspace:*",
+    "@flightlog/scoring": "workspace:*",
+    "better-sqlite3": "catalog:",
+    "node-simconnect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

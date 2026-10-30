@@ -1,0 +1,65 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Единый каталог версий (pnpm catalog:) — один источник правды для общих зависимостей.
+# См. docs/architecture/overview.md §5: единый React/TS/Zod.
+catalog:
+  typescript: ^5.6.3
+  '@types/node': ^20.17.9
+  zod: ^3.24.1
+  vitest: ^3.2.6
+  turbo: ^2.3.3
+  eslint: ^9.17.0
+  '@eslint/js': ^9.17.0
+  typescript-eslint: ^8.18.0
+  eslint-config-prettier: ^9.1.0
+  globals: ^15.13.0
+  prettier: ^3.4.2
+  # --- Web (apps/web: Next.js App Router + Tailwind v4) ---
+  next: ^15.5.26
+  react: ^19.3.0
+  react-dom: ^19.3.0
+  '@types/react': ^19.3.0
+  '@types/react-dom': ^19.3.0
+  tailwindcss: ^4.3.3
+  '@tailwindcss/postcss': ^4.3.3
+  postcss: ^8.5.28
+  # --- UI (packages/ui + apps/web: дизайн-система, моушн, 3D) ---
+  framer-motion: ^13.4.2
+  lucide-react: ^1.47.0
+  three: ^0.186.0
+  '@react-three/fiber': ^9.8.0
+  '@react-three/drei': ^10.7.8
+  '@react-three/postprocessing': ^3.1.2
+  postprocessing: ^6.39.5
+  '@types/three': ^0.186.0
+  # --- Web (apps/web: карта рейса + графики) ---
+  maplibre-gl: ^6.11.1
+  recharts: ^3.10.1
+  react-markdown: ^10.1.0
+  remark-gfm: ^4.0.1
+  rehype-sanitize: ^6.0.0
+  # --- API: почта (SMTP-транспорт, ленивый динамический импорт) ---
+  # nodemailer 9.1.x — фикс GHSA-p6gq-j5cr-w38f / GHSA-2x7j-588g-ccc2 (SSRF/DoS).
+  # @types/nodemailer 8.x — актуальная раскладка типов; код использует свой
+  # локальный интерфейс (smtp-mail.transport.ts), поэтому типы не критичны.
+  nodemailer: ^9.1.0
+  '@types/nodemailer': ^8.0.2
+  # --- Agent + Desktop (нативный SQLite-буфер) ---
+  # better-sqlite3 13.x — N-API (ABI-стабильный) и с prebuild'ами в тарболе:
+  # один и тот же бинарник грузится и в Node (agent/тесты), и в Electron.
+  better-sqlite3: ^13.0.3
+  # node-simconnect — чистый JS-клиент SimConnect (без нативных аддонов),
+  # поэтому грузится и в Node, и в Electron без rebuild.
+  node-simconnect: ^4.2.0
+  # --- Desktop (apps/desktop: Electron-оболочка + agent-host, ADR-0011) ---
+  electron: ^44.4.5
+  electron-vite: ^5.0.0
+  electron-builder: ^26.15.3
+  electron-updater: ^6.8.9
+  '@electron/rebuild': ^4.2.0
+  esbuild: ^0.25.11
+  vite: ^7.3.6
+  playwright-core: ^1.63.0
+  '@playwright/test': ^1.63.0

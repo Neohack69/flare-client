@@ -1,0 +1,43 @@
+{
+  "name": "flare-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Flare desktop client — read-only MSFS 2024 / X-Plane 12 flight recorder",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22.14.0",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "neverBuiltDependencies": [
+      "better-sqlite3"
+    ],
+    "overrides": {
+      "multer": "^2.3.0",
+      "postcss": "^8.5.18",
+      "lodash": "^4.18.0"
+    }
+  },
+  "scripts": {
+    "build:deps": "pnpm --filter @flightlog/desktop build:deps",
+    "build": "pnpm --filter @flightlog/desktop build",
+    "lint": "pnpm --filter @flightlog/desktop lint",
+    "typecheck": "pnpm --filter @flightlog/desktop typecheck",
+    "test": "pnpm --filter @flightlog/desktop test",
+    "verify:native": "pnpm --filter @flightlog/desktop verify:native",
+    "package:win": "pnpm --filter @flightlog/desktop package:win",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "regen:feed": "node apps/desktop/scripts/regen-feed.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@flightlog/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

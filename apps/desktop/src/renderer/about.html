@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>О программе: Flare</title>
+    <link rel="stylesheet" href="./desktop.css" />
+  </head>
+  <body class="about-page">
+    <header class="titlebar" id="titlebar">
+      <span class="titlebar__brand">
+        <span id="titlebar-mark" aria-hidden="true"></span>
+        <span class="titlebar__name">Flare</span>
+        <span class="titlebar__version mono" id="app-version">-</span>
+      </span>
+      <span class="titlebar__controls">
+        <button
+          class="winbtn winbtn--close"
+          type="button"
+          id="button-close"
+          aria-label="Закрыть"
+          title="Закрыть"
+        >
+          <span id="icon-close" aria-hidden="true"></span>
+        </button>
+      </span>
+    </header>
+    <main class="about">
+      <header class="about__logo">
+        <span id="brand" aria-hidden="true"></span>
+        <span class="t-h3">Flare</span>
+      </header>
+
+      <dl class="kv">
+        <dt id="label-agent">Версия ядра</dt>
+        <dd id="agent-version">-</dd>
+        <dt id="label-device">Устройство</dt>
+        <dd id="device">-</dd>
+        <dt id="label-plan" hidden>План</dt>
+        <dd id="plan-name" hidden>
+          <span class="planchip" id="plan-chip" role="note" hidden>
+            <span class="planchip__icon" id="plan-chip-icon" aria-hidden="true" hidden></span>
+            <span id="plan-chip-text"></span>
+            <span class="planchip__bar" id="plan-chip-bar" aria-hidden="true" hidden></span>
+          </span>
+          <span class="plan-free" id="plan-free" hidden></span>
+        </dd>
+      </dl>
+
+      <a
+        class="dbtn dbtn--secondary dbtn--full"
+        id="link-download"
+        href="https://flyflare.ru/download/"
+      >
+        Загрузка
+      </a>
+      <a
+        class="dbtn dbtn--secondary dbtn--full"
+        id="link-licenses"
+        href="https://flyflare.ru/licenses"
+      >
+        Лицензии сторонних разработчиков
+      </a>
+      <div class="grid2">
+        <button class="dbtn dbtn--ghost" type="button" id="button-logs">Копировать лог</button>
+        <button class="dbtn dbtn--ghost" type="button" id="button-diagnostics">
+          Отправить диагностику
+        </button>
+      </div>
+      <p class="caption muted flush" id="diagnostics-hint"></p>
+      <p class="caption flush" id="diagnostics-status" role="status" aria-live="polite"></p>
+
+      <section class="consent">
+        <label class="consent__row">
+          <input type="checkbox" id="consent-checkbox" />
+          <span id="consent-label">Отправлять диагностику об ошибках</span>
+        </label>
+        <p class="caption muted" id="consent-hint"></p>
+        <p class="caption" id="consent-status"></p>
+      </section>
+
+      <button class="dbtn dbtn--primary dbtn--pro-key dbtn--full" type="button" id="button-updates">
+        Проверить обновления
+      </button>
+      <p
+        class="caption muted flush text-center"
+        id="update-status"
+        role="status"
+        aria-live="polite"
+      ></p>
+      <p class="caption muted flush text-center" id="close-hint"></p>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./about.ts"></script>
+  </body>
+</html>

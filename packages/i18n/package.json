@@ -1,0 +1,25 @@
+{
+  "name": "@flightlog/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Общий словарь строк агент-статуса/трея/уведомлений/локальных страниц (RU дефолт + EN). Листовой пакет без зависимостей.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

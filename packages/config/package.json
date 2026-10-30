@@ -1,0 +1,22 @@
+{
+  "name": "@flightlog/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Общие конфиги: eslint (flat), prettier, tsconfig-пресеты",
+  "exports": {
+    ".": "./src/index.js",
+    "./eslint": "./src/eslint.js",
+    "./prettier": "./src/prettier.js"
+  },
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@eslint/js": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "globals": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
+  }
+}

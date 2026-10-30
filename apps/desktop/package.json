@@ -1,0 +1,51 @@
+{
+  "name": "@flightlog/desktop",
+  "productName": "Flare",
+  "version": "0.3.37",
+  "private": true,
+  "author": {
+    "name": "Flare"
+  },
+  "description": "Flare — Electron-клиент: тонкая оболочка + agent-host (ADR-0011, T19)",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "pnpm build:deps && node scripts/build-host.mjs && electron-vite dev",
+    "build": "electron-vite build && node scripts/build-host.mjs",
+    "build:deps": "node scripts/build-deps.mjs",
+    "preview": "electron-vite preview",
+    "start": "electron .",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "verify:native": "node scripts/verify-native.mjs",
+    "rebuild": "node scripts/verify-native.mjs",
+    "verify:agent": "node scripts/verify-agent-host.mjs",
+    "verify:identity": "node scripts/verify-client-identity.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "package:win": "node scripts/build-deps.mjs && pnpm build && node scripts/package-win.mjs",
+    "verify:release": "node scripts/verify-release.mjs",
+    "regen:feed": "node scripts/regen-feed.mjs",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "@flightlog/agent": "workspace:*",
+    "@flightlog/contracts": "workspace:*",
+    "@flightlog/i18n": "workspace:*",
+    "better-sqlite3": "catalog:",
+    "electron-updater": "catalog:",
+    "node-simconnect": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@flightlog/config": "workspace:*",
+    "@types/node": "catalog:",
+    "electron": "catalog:",
+    "electron-builder": "catalog:",
+    "electron-vite": "catalog:",
+    "esbuild": "catalog:",
+    "playwright-core": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

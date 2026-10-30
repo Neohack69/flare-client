@@ -1,0 +1,26 @@
+Flare Desktop — THIRD PARTY NOTICES
+==========================================
+
+This distribution includes the following third-party components.
+
+1. node-simconnect 4.2.0
+   License: LGPL-3.0-or-later
+   Upstream: https://github.com/EvenAR/node-simconnect
+   npm: https://www.npmjs.com/package/node-simconnect
+   Source code is available at the upstream repository. The library is
+   unmodified and loaded dynamically from `app.asar.unpacked` so that it can
+   be replaced by a compatible version (LGPL "replaceability" requirement).
+   Full license text: https://www.gnu.org/licenses/lgpl-3.0.txt
+
+2. better-sqlite3 13.x
+   License: MIT
+   Upstream: https://github.com/WiseLibs/better-sqlite3
+
+3. Electron, Chromium and Node.js
+   Electron: MIT (https://github.com/electron/electron/blob/main/LICENSE)
+   Chromium: BSD-3-Clause and other licenses
+   Node.js: MIT
+
+Microsoft Flight Simulator, SimConnect and related marks are trademarks of
+Microsoft Corporation. This application is not affiliated with Microsoft and
+connects to the simulator in read-only mode only.

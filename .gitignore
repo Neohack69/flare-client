@@ -1,0 +1,33 @@
+# Dependencies and build output
+node_modules/
+dist/
+out/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# electron-builder resources: only the custom installer script is tracked.
+build/
+!apps/desktop/build/
+apps/desktop/build/*
+!apps/desktop/build/installer.nsh
+
+# installers / update feed / local verification
+release/
+release-*/
+*.blockmap
+*.exe
+*.log
+.verify/
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pem
+*.key
+
+.DS_Store
+Thumbs.db
