@@ -180,6 +180,9 @@ describe('XPlaneWebApiSimSource', () => {
     expect(samples[0]?.lat).toBe(41.270451728279141);
     expect(samples[0]?.atc_model).toBe('A20N');
     expect(samples[0]?.title).toBe('A320 with high fidelity system modelling');
+    // Web API path is unchanged: provenance comes from the sim string dataref,
+    // not from the RREF `.acf` helper.
+    expect(samples[0]?.aircraft_icao_source).toBeUndefined();
   });
 
   it('неизвестный dataref → попадает в диагностику как unavailable', async () => {

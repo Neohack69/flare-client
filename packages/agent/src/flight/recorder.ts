@@ -684,6 +684,7 @@ export class FlightRecorder extends TypedEmitter<FlightRecorderEvents> {
           atc_type: sample.atc_type,
           title: sample.title,
           icaoTypeDesignator: this.lookupIcaoTypeDesignator(sample),
+          atcModelSource: sample.aircraft_icao_source,
         });
     this.aircraftIcao = resolved.icao;
     this.aircraftIcaoSource = resolved.source;
@@ -758,6 +759,7 @@ export class FlightRecorder extends TypedEmitter<FlightRecorderEvents> {
       atc_type: sample.atc_type,
       title: sample.title,
       icaoTypeDesignator: this.lookupIcaoTypeDesignator(sample),
+      atcModelSource: sample.aircraft_icao_source,
     });
     // T-D §5.6: сырая строка модели могла появиться позже старта — фиксируем её,
     // даже если тип всё ещё не распознан (это и есть ценная обучающая пара).

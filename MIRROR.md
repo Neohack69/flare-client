@@ -4,9 +4,9 @@ This repository is a **generated allowlist snapshot** of the private Flare
 source monorepo. Do not open pull requests with new files here: changes are
 produced by the sync script and reviewed in the source repository.
 
-- source: `3b75285`
-- source-commit: `3b7528588b142634345576d6b3d4fe6350b10161`
-- generated: `2026-10-30T21:29:11.014Z`
+- source: `e5edcaa`
+- source-commit: `e5edcaaf996753d579128481deccfdf48ac8c834`
+- generated: `2026-10-31T07:09:34.341Z`
 - generator: `scripts/sync-client-mirror.mjs`
 - license: Apache-2.0 (see `LICENSE`)
 
@@ -51,4 +51,4 @@ infrastructure directories, `docs` (except `docs/code-signing-policy.md`),
 internal QA/automation harnesses (`qa-*`, replay harnesses), server
 configuration, secrets, `.env` files.
 
-Files in snapshot: **362** source + **9** generated.
+Files in snapshot: **365** source + **9** generated.

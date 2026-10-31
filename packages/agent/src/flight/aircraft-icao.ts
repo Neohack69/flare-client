@@ -16,13 +16,21 @@ export const UNKNOWN_AIRCRAFT_ICAO = 'ZZZZ';
  * - `atc_type` — валидный ICAO из `ATC TYPE`;
  * - `aircraft_cfg` — `icao_type_designator` из `aircraft.cfg` загруженного ВС
  *   (T-ICAO-BCS3: пресеты аддонов задают невалидный `ATC TYPE`/`ATC MODEL`);
+ * - `xplane_acf` — валидированный `acf/_ICAO` из `.acf` загруженного ВС
+ *   (X-Plane RREF: строковые dataref'ы недоступны);
  * - `title` — точное совпадение `TITLE`/`ATC MODEL`/`ATC TYPE` со справочником;
  * - `heuristic` — эвристический разбор `TITLE`/`ATC MODEL`;
  * - `config` — тип задан конфигом/пользователем (переопределяет сим);
  * - `unknown` — не распознано → `ZZZZ`.
  */
 export type AircraftIcaoSource =
-  'atc_type' | 'aircraft_cfg' | 'title' | 'heuristic' | 'config' | 'unknown';
+  | 'atc_type'
+  | 'aircraft_cfg'
+  | 'xplane_acf'
+  | 'title'
+  | 'heuristic'
+  | 'config'
+  | 'unknown';
 
 export interface ResolvedAircraftIcao {
   icao: string;
@@ -230,17 +238,30 @@ export function resolveAircraftIcao(input: {
   title?: string | null;
   /** `icao_type_designator` из `aircraft.cfg` (робастный источник, T-ICAO-BCS3). */
   icaoTypeDesignator?: string | null;
+  /** Provenance of `atc_model` (X-Plane RREF sets `xplane_acf`). */
+  atcModelSource?: AircraftIcaoSource | null;
 }): ResolvedAircraftIcao {
   const atcType = normalizeAtcText(input.atc_type);
   if (isValidIcao(atcType)) return { icao: canonicalAircraftIcao(atcType), source: 'atc_type' };
+
+  const title = normalizeAtcText(input.title);
+  const atcModel = normalizeAtcText(input.atc_model);
+
+  // A validated `.acf` identity is the simulator's own file, so it outranks a
+  // guessed `aircraft.cfg` match (which is primarily an MSFS add-on index).
+  if (
+    input.atcModelSource === 'xplane_acf' &&
+    atcModel !== UNKNOWN_AIRCRAFT_ICAO &&
+    isValidIcao(atcModel)
+  ) {
+    const variant = titleVariantForFamily(atcModel, title);
+    return { icao: canonicalAircraftIcao(variant ?? atcModel), source: 'xplane_acf' };
+  }
 
   const designator = normalizeAtcText(input.icaoTypeDesignator);
   if (isValidIcao(designator)) {
     return { icao: canonicalAircraftIcao(designator), source: 'aircraft_cfg' };
   }
-
-  const title = normalizeAtcText(input.title);
-  const atcModel = normalizeAtcText(input.atc_model);
 
   // Точный designator из сима (например, X-Plane `acf_ICAO = A20N`) сильнее
   // title: словарь/эвристика не должны «понижать» его до семейного A320.

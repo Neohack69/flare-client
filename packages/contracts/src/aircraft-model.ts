@@ -71,6 +71,7 @@ export const aircraftIcaoSourceSchema = z.enum([
   'title',
   'heuristic',
   'aircraft_cfg',
+  'xplane_acf',
   'unknown',
   'user',
   'learned',

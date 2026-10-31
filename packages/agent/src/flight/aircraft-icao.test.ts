@@ -314,6 +314,24 @@ describe('resolveAircraftIcao (ADR-0008/T84)', () => {
         source: 'title',
       });
     });
+
+    it('source=xplane_acf сохраняется и сильнее aircraft.cfg', () => {
+      expect(
+        resolveAircraftIcao({
+          atc_model: 'A20N',
+          title: 'Airbus A320neo',
+          icaoTypeDesignator: 'A320',
+          atcModelSource: 'xplane_acf',
+        }),
+      ).toEqual({ icao: 'A20N', source: 'xplane_acf' });
+      expect(
+        resolveAircraftIcao({
+          atc_model: 'A320',
+          title: 'A320neo',
+          atcModelSource: 'xplane_acf',
+        }),
+      ).toEqual({ icao: 'A20N', source: 'xplane_acf' });
+    });
   });
 
   it('возвращает версию справочника', () => {

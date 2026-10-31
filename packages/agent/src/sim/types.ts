@@ -46,6 +46,12 @@ export interface TelemetrySample {
   atc_type?: string | null;
   /** `TITLE` (string SimVar) — имя ВС; fallback-источник `aircraft_icao` (T84). */
   title?: string | null;
+  /**
+   * Provenance of `atc_model` when it did not come from the sim's string
+   * dataref/SimVar. X-Plane RREF sets `'xplane_acf'` after reading the loaded
+   * aircraft from `Log.txt` + `.acf`; Web API/MSFS leave it unset.
+   */
+  aircraft_icao_source?: 'xplane_acf' | null;
   /** Ветер: `AMBIENT WIND DIRECTION` (откуда дует, град). */
   wind_dir_deg?: number | null;
   /** Ветер: `AMBIENT WIND VELOCITY` (узлы, уже включает порывы). */

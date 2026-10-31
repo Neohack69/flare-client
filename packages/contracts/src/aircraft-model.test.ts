@@ -149,6 +149,7 @@ describe('aircraftIcaoSourceSchema / dictionary artifact (T-D §5.1/§6.4)', () 
       'title',
       'heuristic',
       'aircraft_cfg',
+      'xplane_acf',
       'unknown',
       'user',
       'learned',

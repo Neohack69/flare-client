@@ -22,6 +22,7 @@ import type {
   SimSourceOpenInfo,
 } from '../source.js';
 import { TypedEmitter } from '../../util/emitter.js';
+import type { TelemetrySample } from '../types.js';
 import {
   XPLANE_CORE_REQUIRED_DATAREFS,
   XPLANE_NO_EQUIVALENT_FIELDS,
@@ -48,6 +49,11 @@ import {
   setXPlaneValue,
   type XPlaneRawValue,
 } from './values.js';
+import {
+  XPLANE_AIRCRAFT_IDENTITY_RECHECK_MS,
+  resolveXPlaneAircraftIdentity,
+  type XPlaneAircraftIdentity,
+} from './aircraft-identity.js';
 
 /** Минимальная форма UDP-сокета (тестируется без сети). */
 export interface DgramSocketLike {
@@ -90,6 +96,10 @@ export interface XPlaneRrefSimSourceOptions {
   socketFactory?: DgramSocketFactory;
   connectTimeoutMs?: number;
   now?: () => number;
+  /** Test hook: resolve the loaded aircraft identity (defaults to Log.txt + .acf). */
+  aircraftIdentity?: () => XPlaneAircraftIdentity | null;
+  /** Minimum interval between grounded identity re-checks (ms). */
+  aircraftIdentityRecheckMs?: number;
 }
 
 /** Read-only источник X-Plane 12 поверх UDP `RREF`. */
@@ -104,6 +114,8 @@ export class XPlaneRrefSimSource extends TypedEmitter<SimSourceEvents> implement
   private readonly maxSampleHz: number;
   private readonly connectTimeoutMs: number;
   private readonly now: () => number;
+  private readonly resolveAircraftIdentity: () => XPlaneAircraftIdentity | null;
+  private readonly aircraftIdentityRecheckMs: number;
 
   private socket: DgramSocketLike | null = null;
   private isConnected = false;
@@ -112,6 +124,9 @@ export class XPlaneRrefSimSource extends TypedEmitter<SimSourceEvents> implement
   private lastEmitMs = 0;
   private pausedLogged = false;
   private subscriptionDiagnostics: SimSourceDiagnostics | null = null;
+  private aircraftIdentity: XPlaneAircraftIdentity | null = null;
+  private aircraftIdentityCheckedAtMs = 0;
+  private aircraftIdentityLogged = false;
 
   constructor(options: XPlaneRrefSimSourceOptions = {}) {
     super();
@@ -122,6 +137,9 @@ export class XPlaneRrefSimSource extends TypedEmitter<SimSourceEvents> implement
     this.maxSampleHz = options.maxSampleHz ?? XP_DEFAULT_MAX_SAMPLE_HZ;
     this.connectTimeoutMs = options.connectTimeoutMs ?? XP_CONNECT_TIMEOUT_MS;
     this.now = options.now ?? (() => Date.now());
+    this.resolveAircraftIdentity = options.aircraftIdentity ?? resolveXPlaneAircraftIdentity;
+    this.aircraftIdentityRecheckMs =
+      options.aircraftIdentityRecheckMs ?? XPLANE_AIRCRAFT_IDENTITY_RECHECK_MS;
   }
 
   get connected(): boolean {
@@ -170,6 +188,9 @@ export class XPlaneRrefSimSource extends TypedEmitter<SimSourceEvents> implement
 
     this.socket = socket;
     this.isConnected = true;
+    this.aircraftIdentity = this.tryResolveAircraftIdentity();
+    this.aircraftIdentityCheckedAtMs = this.now();
+    this.logAircraftIdentity();
     const planned = [...new Set(targets.map((target) => target.dataref))];
     this.subscriptionDiagnostics = describeXPlaneSubscription({
       transport: 'xp-udp-rref',
@@ -281,7 +302,47 @@ export class XPlaneRrefSimSource extends TypedEmitter<SimSourceEvents> implement
       return;
     }
     this.lastEmitMs = now;
-    this.emit('sample', buildXPlaneSample(this.values, new Date(now).toISOString()));
+    if (readXPlaneBool(this.values, 'onground_any') === true) {
+      this.maybeRefreshAircraftIdentity(now);
+    }
+    const sample = buildXPlaneSample(this.values, new Date(now).toISOString());
+    this.emit('sample', this.withAircraftIdentity(sample));
+  }
+
+  private maybeRefreshAircraftIdentity(now: number): void {
+    if (now - this.aircraftIdentityCheckedAtMs < this.aircraftIdentityRecheckMs) return;
+    this.aircraftIdentityCheckedAtMs = now;
+    this.aircraftIdentity = this.tryResolveAircraftIdentity();
+    this.logAircraftIdentity();
+  }
+
+  private tryResolveAircraftIdentity(): XPlaneAircraftIdentity | null {
+    try {
+      return this.resolveAircraftIdentity();
+    } catch {
+      return null;
+    }
+  }
+
+  private withAircraftIdentity(sample: TelemetrySample): TelemetrySample {
+    const identity = this.aircraftIdentity;
+    if (!identity) return sample;
+    return {
+      ...sample,
+      atc_model: identity.icao,
+      title: identity.title,
+      aircraft_icao_source: 'xplane_acf',
+    };
+  }
+
+  private logAircraftIdentity(): void {
+    if (!this.aircraftIdentity || this.aircraftIdentityLogged) return;
+    this.aircraftIdentityLogged = true;
+    this.logger?.info('X-Plane aircraft identity resolved from .acf', {
+      transport: 'xp-udp-rref',
+      aircraft_icao_source: 'xplane_acf',
+      icao: this.aircraftIdentity.icao,
+    });
   }
 
   private markDisconnected(reason: string): void {

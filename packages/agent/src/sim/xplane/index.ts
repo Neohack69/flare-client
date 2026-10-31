@@ -188,6 +188,22 @@ export type { RrefPair } from './rref.js';
 export { describeMissingXPlaneDatarefs, describeXPlaneSubscription } from './diagnostics.js';
 export type { XPlaneSubscriptionReport } from './diagnostics.js';
 export {
+  XPLANE_ACF_MAX_BYTES,
+  XPLANE_AIRCRAFT_IDENTITY_RECHECK_MS,
+  XPLANE_LOG_TAIL_MAX_BYTES,
+  clearXPlaneAircraftIdentityCache,
+  parseAcfIdentity,
+  parseLogAircraftPath,
+  resolveXPlaneAircraftIdentity,
+} from './aircraft-identity.js';
+export type {
+  XPlaneAircraftIdentity,
+  XPlaneAircraftIdentityCache,
+  XPlaneAircraftIdentityCacheEntry,
+  XPlaneAircraftIdentityOptions,
+  XPlaneAircraftIdentityStats,
+} from './aircraft-identity.js';
+export {
   DEFAULT_XP_TRANSPORT_PREFERENCE,
   KNOWN_XP_TRANSPORT_PREFERENCES,
   XP_CAPABILITIES_TIMEOUT_MS,
